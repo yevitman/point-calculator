@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>포인트 계산기</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+    <meta name="theme-color" content="#0f766e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="포인트 계산기">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --primary: #0f766e; --primary-dark: #115e59;
+        }
+        .panel-hidden { display: none !important; }
+        body { background-color: #f8fafc; min-height: 100vh; color: #1e293b; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+    </style>
+</head>
+<body class="p-2 flex flex-col items-center bg-gradient-to-br from-indigo-100 via-pink-50 to-amber-100 min-h-screen">
+
+        <div class="w-full max-w-md bg-white border border-indigo-200/80 rounded-2xl shadow-lg shadow-indigo-100/60 p-3 space-y-3">
+        <!-- 헤더 영역 -->
+        <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-1.5">
+                <h1 class="text-lg font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 bg-clip-text text-transparent whitespace-nowrap">포인트 계산기</h1>
+                <button id="openTargetMissionModalBtn" type="button" class="w-6 h-6 rounded-full border border-indigo-300 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 flex items-center justify-center transition-colors" title="목표포인트 및 미션금 입력" aria-label="목표포인트 및 미션금 입력">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                </button>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="openWeeklyIncomeBtn" class="text-[10px] font-bold text-violet-700 bg-violet-100 px-2 py-1 rounded-full border border-violet-300 shadow-sm whitespace-nowrap hover:bg-violet-200">주간수입</button>
+                <button id="userLinkBtn" class="hidden text-slate-400 hover:text-indigo-600 transition-colors p-1" title="저장된 링크 이동">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    </svg>
+                </button>
+                <button id="headerResetBtn" class="text-slate-400 hover:text-rose-500 transition-colors p-1" title="전체 초기화">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                </button>
+                <div id="deadlineDisplay" class="bg-gradient-to-r from-amber-100 to-orange-100 text-orange-800 text-[10px] font-bold px-2 py-1 rounded-full border border-amber-300 shadow-sm whitespace-nowrap">
+                    마감: -
+                </div>
+            </div>
+        </div>
+
+        <!-- 설정 및 상태 표시 섹션 -->
+        <div class="grid grid-cols-4 gap-1.5">
+            <div class="bg-rose-50 p-2 rounded-lg text-center border border-rose-200 shadow-sm">
+                <p class="text-[10px] text-rose-600 font-bold leading-tight mb-1">목표</p>
+                <div id="targetDisplay" class="text-sm font-bold text-rose-700 truncate leading-tight">0</div>
+            </div>
+            <div class="bg-indigo-50 p-2 rounded-lg text-center border border-indigo-200 shadow-sm">
+                <p class="text-[10px] text-indigo-600 font-bold leading-tight mb-1">미션금</p>
+                <div id="missionDisplay" class="text-sm font-bold text-indigo-700 truncate leading-tight">0</div>
+            </div>
+            <div class="bg-emerald-50 p-2 rounded-lg text-center border border-emerald-200 shadow-sm">
+                <p class="text-[10px] text-emerald-600 font-bold leading-tight mb-1">달성</p>
+                <div id="earnedDisplay" class="text-sm font-extrabold text-emerald-700 truncate leading-tight">0</div>
+            </div>
+            <div class="bg-sky-50 p-2 rounded-lg text-center border border-sky-200 shadow-sm">
+                <p class="text-[10px] text-sky-600 font-bold leading-tight mb-1">남음</p>
+                <div id="remainingPoints" class="text-sm font-extrabold text-sky-700 truncate leading-tight">0</div>
+            </div>
+        </div>
+
+        <!-- 계산기 폼 -->
+        <div class="pt-1">
+            <div class="flex gap-2">
+                <button id="openPerformanceModal" class="flex-1 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg shadow-md shadow-emerald-200 hover:from-emerald-600 hover:to-teal-600 transition font-bold text-sm">
+                    수행포인트
+                </button>
+                <button id="openIncomeModal" class="flex-1 py-3 bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white rounded-lg shadow-md shadow-fuchsia-200 hover:from-violet-600 hover:to-fuchsia-600 transition font-bold text-sm">
+                    수입금
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3">
+            <div class="flex flex-col">
+                <ul id="performanceRecordList" class="divide-y divide-emerald-100 border border-emerald-200 rounded-lg max-h-[120px] overflow-y-auto custom-scrollbar bg-emerald-50/30">
+                </ul>
+            </div>
+            <div class="flex flex-col">
+                <ul id="incomeRecordList" class="divide-y divide-purple-100 border border-purple-200 rounded-lg max-h-[120px] overflow-y-auto custom-scrollbar bg-purple-50/30">
+                </ul>
+                <div id="incomeTotalContainer" class="mt-2 p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg flex justify-between items-center border border-amber-200 cursor-pointer transition-all hover:bg-amber-100 hover:border-amber-300 active:scale-[0.98] select-none">
+                    <span id="totalIncomeLabel" class="text-xs font-bold text-amber-700 flex items-center gap-1.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        총 수입금
+                    </span>
+                    <span id="totalIncomeDisplay" class="text-sm font-bold text-orange-700">0 원</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="performanceModal" class="panel-hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/20 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl p-4 w-64 shadow-xl flex flex-col gap-3 border-t-4 border-emerald-500 border-x border-b border-slate-200">
+            <h3 class="text-slate-900 text-sm font-bold text-center">수행 포인트 입력</h3>
+            <input type="number" id="modalPerformanceInput" step="1" class="w-full p-2 rounded-lg text-sm bg-slate-50 text-slate-900 focus:outline-none border border-slate-200" placeholder="포인트 입력 (예: 10)" />
+            <div class="flex gap-2">
+                <button onclick="closeModal('performanceModal')" class="flex-1 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs rounded-lg transition">취소</button>
+                <button id="savePerformanceBtn" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="incomeModal" class="panel-hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/20 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl p-4 w-64 shadow-xl flex flex-col gap-3 border-t-4 border-fuchsia-500 border-x border-b border-slate-200">
+            <h3 class="text-slate-900 text-sm font-bold text-center">수입금 입력</h3>
+            <div class="flex gap-2 mb-1 justify-center">
+                <label class="flex items-center gap-1 cursor-pointer">
+                    <input type="radio" name="incomeModalSource" value="배민" class="accent-indigo-600" checked>
+                    <span class="text-slate-700 text-xs font-bold">배민</span>
+                </label>
+                <label class="flex items-center gap-1 cursor-pointer">
+                    <input type="radio" name="incomeModalSource" value="쿠팡" class="accent-indigo-600">
+                    <span class="text-slate-700 text-xs font-bold">쿠팡</span>
+                </label>
+            </div>
+            <input type="number" id="modalIncomeInput" class="w-full p-2 rounded-lg text-sm bg-slate-50 border border-slate-200 focus:outline-none" placeholder="금액 입력" />
+            <div class="flex gap-2">
+                <button onclick="closeModal('incomeModal')" class="flex-1 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs rounded-lg transition">취소</button>
+                <button id="saveIncomeBtn" class="flex-1 py-1.5 bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold rounded-lg transition">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="weeklyIncomeModal" class="panel-hidden fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-xl p-4 w-full max-w-sm shadow-2xl border border-gray-200 flex flex-col gap-3">
+            <div class="flex justify-between items-center text-gray-800 mb-2">
+                <h3 class="text-sm font-bold flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg> 주간 수입 기록 (월 ~ 일)</h3>
+                <button id="clearWeeklyBtn" class="text-[10px] text-rose-500 hover:text-rose-600 flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg> 비우기</button>
+            </div>
+            <div id="weeklyList" class="grid grid-cols-2 gap-2"></div>
+            <div class="mt-2 p-3 bg-indigo-50 rounded-lg flex justify-between items-center border border-indigo-100">
+                <span class="text-xs font-bold text-indigo-700">합계</span>
+                <span id="weeklyTotal" class="text-sm font-bold text-indigo-900">0 원</span>
+            </div>
+            <button onclick="closeModal('weeklyIncomeModal')" class="w-full py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg mt-1">닫기</button>
+        </div>
+    </div>
+
+    <div id="targetMissionModal" class="panel-hidden fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
+        <div class="bg-gradient-to-br from-white to-indigo-50 rounded-2xl p-4 w-64 shadow-2xl flex flex-col gap-3">
+            <h3 class="text-sm font-bold text-center text-gray-800">목표포인트 / 미션금 설정</h3>
+            <div class="flex flex-col gap-1">
+                <label for="modalCombinedTargetInput" class="text-xs font-bold text-rose-600">목표포인트</label>
+                <input type="number" id="modalCombinedTargetInput" class="w-full p-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="목표포인트 입력" />
+            </div>
+            <div class="flex flex-col gap-1">
+                <label for="modalCombinedMissionInput" class="text-xs font-bold text-indigo-600">미션금</label>
+                <input type="number" id="modalCombinedMissionInput" class="w-full p-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="미션금 입력" />
+            </div>
+            <div class="flex flex-col gap-1">
+                <label for="modalCombinedDeadlineInput" class="text-xs font-bold text-amber-600">미션마감시간</label>
+                <input type="text" id="modalCombinedDeadlineInput" class="w-full p-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="미션마감시간 입력 (예: 22:00)" />
+            </div>
+            <div class="flex flex-col gap-1">
+                <label for="modalLinkInput" class="text-xs font-bold text-emerald-600">공유 링크</label>
+                <input type="url" id="modalLinkInput" class="w-full p-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="공유할 링크 주소 입력" />
+                <button id="copyLinkBtn" class="mt-1 w-full text-[10px] py-1 border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50 transition">링크 복사</button>
+            </div>
+            <div class="flex gap-2 pt-1">
+                <button onclick="closeModal('targetMissionModal')" class="flex-1 py-1.5 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition">취소</button>
+                <button id="saveTargetMissionBtn" class="flex-1 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmResetModal" class="panel-hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+        <div class="bg-white rounded-xl shadow-2xl p-4 w-[240px] border-t-4 border-rose-500">
+            <div class="text-center mb-4">
+                <p class="text-xs font-bold text-gray-800">모든 기록을 초기화하시겠습니까?</p>
+            </div>
+            <div class="flex gap-2">
+                <button id="cancelResetBtn" class="flex-1 py-1.5 text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg transition">취소</button>
+                <button id="confirmResetBtn" class="flex-1 py-1.5 text-xs font-bold bg-gradient-to-r from-rose-500 to-orange-500 text-white rounded-lg transition">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="genericConfirmModal" class="panel-hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+        <div class="bg-white rounded-lg shadow-xl p-3 w-[200px]">
+            <p class="text-xs font-bold text-gray-700 text-center mb-3" id="confirmMsg">삭제하시겠습니까?</p>
+            <div class="flex gap-2">
+                <button id="cancelGenericBtn" class="flex-1 py-1 text-xs font-bold bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition">아니오</button>
+                <button id="confirmGenericBtn" class="flex-1 py-1 text-xs font-bold bg-rose-500 text-white rounded hover:bg-rose-600 transition">예</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const initApp = () => {
+            const remainingDisplay = document.getElementById('remainingPoints');
+            const targetDisplay = document.getElementById('targetDisplay');
+            const missionDisplay = document.getElementById('missionDisplay');
+            const earnedDisplay = document.getElementById('earnedDisplay');
+            const performanceRecordList = document.getElementById('performanceRecordList');
+            const incomeRecordList = document.getElementById('incomeRecordList');
+            const totalIncomeDisplay = document.getElementById('totalIncomeDisplay');
+            const headerResetBtn = document.getElementById('headerResetBtn');
+            const deadlineDisplay = document.getElementById('deadlineDisplay');
+
+            const performanceModal = document.getElementById('performanceModal');
+            const openPerformanceModal = document.getElementById('openPerformanceModal');
+            const modalPerformanceInput = document.getElementById('modalPerformanceInput');
+            const savePerformanceBtn = document.getElementById('savePerformanceBtn');
+
+            const incomeModal = document.getElementById('incomeModal');
+            const openIncomeModal = document.getElementById('openIncomeModal');
+            const modalIncomeInput = document.getElementById('modalIncomeInput');
+            const saveIncomeBtn = document.getElementById('saveIncomeBtn');
+
+            const targetMissionModal = document.getElementById('targetMissionModal');
+            const openTargetMissionModalBtn = document.getElementById('openTargetMissionModalBtn');
+            const modalCombinedTargetInput = document.getElementById('modalCombinedTargetInput');
+            const modalCombinedMissionInput = document.getElementById('modalCombinedMissionInput');
+            const modalCombinedDeadlineInput = document.getElementById('modalCombinedDeadlineInput');
+            const saveTargetMissionBtn = document.getElementById('saveTargetMissionBtn');
+
+            const weeklyIncomeModal = document.getElementById('weeklyIncomeModal');
+            const openWeeklyIncomeBtn = document.getElementById('openWeeklyIncomeBtn');
+            const totalIncomeLabel = document.getElementById('totalIncomeLabel');
+            const weeklyList = document.getElementById('weeklyList');
+            const weeklyTotal = document.getElementById('weeklyTotal');
+            const clearWeeklyBtn = document.getElementById('clearWeeklyBtn');
+
+            const confirmResetModal = document.getElementById('confirmResetModal');
+            const cancelResetBtn = document.getElementById('cancelResetBtn');
+            const confirmResetBtn = document.getElementById('confirmResetBtn');
+            const genericConfirmModal = document.getElementById('genericConfirmModal');
+            const confirmMsg = document.getElementById('confirmMsg');
+            const cancelGenericBtn = document.getElementById('cancelGenericBtn');
+            const confirmGenericBtn = document.getElementById('confirmGenericBtn');
+            let pendingAction = null;
+
+            const safeStorage = {
+                memory: { pc_records: [], pc_target: 0, pc_mission: 0, pc_deadline: '', pc_link: '' },
+                setItem(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch(e) { this.memory[key] = value; } },
+                getItem(key) { try { return JSON.parse(localStorage.getItem(key)); } catch(e) { return this.memory[key] || null; } }
+            };
+
+            let records = safeStorage.getItem('pc_records') || [];
+            let target = safeStorage.getItem('pc_target') || 0;
+            let mission = safeStorage.getItem('pc_mission') || 0;
+            let deadline = safeStorage.getItem('pc_deadline') || '';
+            let savedLink = safeStorage.getItem('pc_link') || '';
+            let weeklyRecords = safeStorage.getItem('pc_weekly_records') || [0,0,0,0,0,0,0];
+            let weeklyLocked = safeStorage.getItem('pc_weekly_locked') || [false, false, false, false, false, false, false];
+
+            const updateWeeklyUI = () => {
+                weeklyList.innerHTML = '';
+                const days = ['월', '화', '수', '목', '금', '토', '일'];
+                const now = new Date();
+                const monday = new Date(now);
+                monday.setDate(now.getDate() - (now.getDay() === 0 ? 6 : now.getDay() - 1));
+                
+                let sum = 0;
+                weeklyRecords.forEach((val, idx) => {
+                    sum += val;
+                    const d = new Date(monday);
+                    d.setDate(monday.getDate() + idx);
+                    const formattedDate = `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+                    const isLocked = weeklyLocked[idx];
+                    
+                    const div = document.createElement('div');
+                    div.className = 'flex items-center bg-gray-50 rounded px-2 py-1.5 border border-gray-200';
+                    div.innerHTML = `
+                        <button type="button" class="text-[10px] font-bold whitespace-nowrap hover:opacity-70 ${isLocked ? 'text-red-500' : 'text-indigo-500'}" onclick="lockAmount(${idx})">${days[idx]}(${formattedDate})</button>
+                        <input type="text" inputmode="numeric" class="w-full bg-transparent text-right text-xs text-gray-700 focus:outline-none" value="${(Number(val) || 0).toLocaleString()}" data-idx="${idx}" />
+                        <button class="ml-2 text-gray-400 hover:text-rose-500" onclick="updateWeekly(${idx}, 0)"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+                    `;
+                    const inputEl = div.querySelector('input');
+                    inputEl.addEventListener('input', (e) => {
+                        const cleanVal = e.target.value.replace(/[^0-9]/g, '');
+                        const numVal = parseInt(cleanVal, 10) || 0;
+                        weeklyLocked[idx] = false;
+                        weeklyRecords[idx] = numVal;
+                        safeStorage.setItem('pc_weekly_locked', weeklyLocked);
+                        safeStorage.setItem('pc_weekly_records', weeklyRecords);
+                        e.target.value = cleanVal ? numVal.toLocaleString() : '';
+                        const totalSum = weeklyRecords.reduce((a, b) => a + b, 0);
+                        weeklyTotal.textContent = totalSum.toLocaleString() + ' 원';
+                    });
+                    inputEl.addEventListener('blur', (e) => {
+                        if (e.target.value === '') {
+                            e.target.value = (0).toLocaleString();
+                        }
+                    });
+                    weeklyList.appendChild(div);
+                });
+                weeklyTotal.textContent = sum.toLocaleString() + ' 원';
+            };
+
+            window.lockAmount = (idx) => {
+                // 특정 인덱스만 갱신되도록 보장하며, 데이터 타입 및 참조 유지
+                const currentTotal = getTotalIncome();
+                weeklyRecords[idx] = currentTotal;
+                weeklyLocked[idx] = true;
+
+                // 상태 저장
+                safeStorage.setItem('pc_weekly_records', [...weeklyRecords]);
+                safeStorage.setItem('pc_weekly_locked', [...weeklyLocked]);
+                
+                // UI 갱신
+                updateWeeklyUI();
+            };
+
+            window.updateWeekly = (idx, val) => {
+                weeklyRecords[idx] = val;
+                safeStorage.setItem('pc_weekly_records', weeklyRecords);
+                updateWeeklyUI();
+            };
+
+            const showWeeklyModal = () => {
+                updateWeeklyUI();
+                weeklyIncomeModal.classList.remove('panel-hidden');
+            };
+
+            const updateDeadlineUI = () => {
+                deadlineDisplay.textContent = deadline ? `마감: ${deadline}` : '마감: 미설정';
+                const userLinkBtn = document.getElementById('userLinkBtn');
+                if (savedLink) {
+                    userLinkBtn.classList.remove('panel-hidden');
+                    userLinkBtn.classList.remove('hidden');
+                } else {
+                    userLinkBtn.classList.add('hidden');
+                }
+            };
+
+            const getTotalIncome = () => {
+                return records.filter(r => r.source !== '수행').reduce((sum, item) => sum + (item.value || 0), 0);
+            };
+
+            const updateUI = () => {
+                const totalIncome = getTotalIncome();
+                if (totalIncomeDisplay) {
+                    const dayName = ['일', '월', '화', '수', '목', '금', '토'][new Date().getDay()];
+                    document.getElementById('totalIncomeLabel').textContent = `총 수입금 (${dayName}요일)`;
+                    totalIncomeDisplay.textContent = totalIncome.toLocaleString() + ' 원';
+                }
+                targetDisplay.textContent = (target || 0).toLocaleString();
+                missionDisplay.textContent = (mission || 0).toLocaleString();
+                const performanceRecords = records.filter(r => r.source === '수행');
+                const totalEarned = performanceRecords.reduce((sum, item) => sum + item.value, 0);
+                earnedDisplay.textContent = totalEarned.toLocaleString();
+                remainingDisplay.textContent = Math.max(0, (target || 0) - totalEarned).toLocaleString();
+                updateDeadlineUI();
+
+                performanceRecordList.innerHTML = '';
+                performanceRecords.slice().reverse().forEach((r) => {
+                    const originalIdx = records.indexOf(r);
+                    const li = document.createElement('li');
+                    li.className = 'flex justify-between items-center py-1.5 px-2 hover:bg-white';
+                    li.innerHTML = `
+                        <div class="flex items-center gap-2">
+                    <span class="text-[9px] font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded">수행</span>
+                    <span class="text-[9px] text-slate-400">${r.date}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="font-bold text-slate-800 text-sm">${r.value.toLocaleString()}P</span>
+                    <button onclick="deleteSingleRecord(${originalIdx})" class="text-slate-300 hover:text-rose-500 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+                </div>`;
+            performanceRecordList.appendChild(li);
+        });
+
+        incomeRecordList.innerHTML = '';
+        const incomeRecords = records.filter(r => r.source !== '수행');
+        if (incomeRecords.length === 0) incomeRecordList.innerHTML = '<li class="p-3 text-center text-slate-400 text-xs">수입금 기록 없음</li>';
+        else {
+            incomeRecords.slice().reverse().forEach(r => {
+                const originalIdx = records.indexOf(r);
+                const li = document.createElement('li');
+                li.className = 'flex justify-between items-center py-1.5 px-2 hover:bg-slate-50';
+                const badgeClass = r.source === '배민' ? 'text-teal-700 bg-teal-50' : 'text-rose-700 bg-rose-50';
+                li.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="text-[9px] font-bold ${badgeClass} px-1.5 py-0.5 rounded">${r.source}</span>
+                        <span class="text-[9px] text-slate-400">${r.date}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-slate-800 text-sm">${r.value.toLocaleString()}원</span>
+                        <button onclick="deleteSingleRecord(${originalIdx})" class="text-slate-300 hover:text-rose-500 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+                    </div>`;
+                incomeRecordList.appendChild(li);
+            });
+        }
+            };
+
+            window.deleteSingleRecord = (index) => {
+                confirmMsg.textContent = '이 기록을 삭제하시겠습니까?';
+                pendingAction = () => {
+                    records.splice(index, 1);
+                    safeStorage.setItem('pc_records', records);
+                    updateUI();
+                };
+                genericConfirmModal.classList.remove('panel-hidden');
+            };
+
+            cancelGenericBtn.onclick = () => genericConfirmModal.classList.add('panel-hidden');
+            confirmGenericBtn.onclick = () => {
+                if(pendingAction) pendingAction();
+                genericConfirmModal.classList.add('panel-hidden');
+            };
+
+            window.closeModal = (id) => document.getElementById(id).classList.add('panel-hidden');
+            
+            savePerformanceBtn.addEventListener('click', () => {
+                const val = parseInt(modalPerformanceInput.value, 10);
+                if (isNaN(val) || val <= 0) return;
+                records.push({ value: val, date: new Date().toLocaleDateString('ko-KR'), source: '수행' });
+                safeStorage.setItem('pc_records', records);
+                modalPerformanceInput.value = '';
+                performanceModal.classList.add('panel-hidden');
+                updateUI();
+            });
+
+            saveIncomeBtn.addEventListener('click', () => {
+                const val = parseFloat(modalIncomeInput.value);
+                const source = document.querySelector('input[name="incomeModalSource"]:checked').value;
+                if (isNaN(val) || val <= 0) return;
+                records.push({ value: Math.round(val), date: new Date().toLocaleDateString('ko-KR'), source: source });
+                safeStorage.setItem('pc_records', records);
+                modalIncomeInput.value = '';
+                incomeModal.classList.add('panel-hidden');
+                updateUI();
+            });
+
+            openPerformanceModal.addEventListener('click', () => performanceModal.classList.remove('panel-hidden'));
+            openIncomeModal.addEventListener('click', () => incomeModal.classList.remove('panel-hidden'));
+            openTargetMissionModalBtn.addEventListener('click', () => {
+                modalCombinedTargetInput.value = target || '';
+                modalCombinedMissionInput.value = mission || '';
+                modalCombinedDeadlineInput.value = deadline || '';
+                document.getElementById('modalLinkInput').value = savedLink || '';
+                targetMissionModal.classList.remove('panel-hidden');
+            });
+
+            document.getElementById('copyLinkBtn').addEventListener('click', () => {
+                const linkInput = document.getElementById('modalLinkInput');
+                if (linkInput.value) {
+                    navigator.clipboard.writeText(linkInput.value).then(() => {
+                        const btn = document.getElementById('copyLinkBtn');
+                        const originalText = btn.textContent;
+                        btn.textContent = '복사 완료!';
+                        setTimeout(() => btn.textContent = originalText, 2000);
+                    });
+                }
+            });
+
+            document.getElementById('userLinkBtn').addEventListener('click', () => {
+                const url = savedLink.trim();
+                if (url) {
+                    const finalUrl = /^https?:\/\//i.test(url) ? url : 'https://' + url;
+                    window.open(finalUrl, '_blank', 'noopener,noreferrer');
+                }
+            });
+
+            openWeeklyIncomeBtn.addEventListener('click', showWeeklyModal);
+            document.getElementById('incomeTotalContainer').addEventListener('click', showWeeklyModal);
+
+            clearWeeklyBtn.addEventListener('click', () => {
+                weeklyRecords = [0,0,0,0,0,0,0];
+                weeklyLocked = [false, false, false, false, false, false, false];
+                safeStorage.setItem('pc_weekly_records', weeklyRecords);
+                safeStorage.setItem('pc_weekly_locked', weeklyLocked);
+                updateWeeklyUI();
+            });
+            saveTargetMissionBtn.addEventListener('click', () => {
+                target = parseFloat(modalCombinedTargetInput.value) || 0;
+                mission = parseFloat(modalCombinedMissionInput.value) || 0;
+                deadline = modalCombinedDeadlineInput.value || '';
+                savedLink = document.getElementById('modalLinkInput').value || '';
+                safeStorage.setItem('pc_target', target);
+                safeStorage.setItem('pc_mission', mission);
+                safeStorage.setItem('pc_deadline', deadline);
+                safeStorage.setItem('pc_link', savedLink);
+                updateUI();
+                targetMissionModal.classList.add('panel-hidden');
+            });
+            headerResetBtn.addEventListener('click', () => confirmResetModal.classList.remove('panel-hidden'));
+            cancelResetBtn.addEventListener('click', () => confirmResetModal.classList.add('panel-hidden'));
+            confirmResetBtn.addEventListener('click', () => { 
+                target = 0; 
+                mission = 0; 
+                deadline = ''; 
+                savedLink = '';
+                safeStorage.setItem('pc_target', 0); 
+                safeStorage.setItem('pc_mission', 0); 
+                safeStorage.setItem('pc_deadline', ''); 
+                safeStorage.setItem('pc_link', '');
+                confirmResetModal.classList.add('panel-hidden'); 
+                updateUI(); 
+            });
+
+            // 테마 시스템 구현
+            let startY = 0;
+            const applyTheme = (themeClass) => {
+                document.documentElement.classList.remove('theme-1', 'theme-2', 'theme-3', 'theme-4', 'theme-5');
+                document.documentElement.classList.add(themeClass);
+            };
+
+            document.addEventListener('touchstart', (e) => {
+                startY = e.touches[0].clientY;
+            }, { passive: true });
+
+            document.addEventListener('touchend', (e) => {
+                if (window.scrollY === 0) {
+                    const endY = e.changedTouches[0].clientY;
+                    if (endY - startY > 50) {
+                        const themes = ['theme-1', 'theme-2', 'theme-3', 'theme-4', 'theme-5'];
+                        const randomTheme = themes[Math.floor(Math.random() * themes.length)];
+                        applyTheme(randomTheme);
+                    }
+                }
+            }, { passive: true });
+            
+            applyTheme('theme-1');
+            
+            updateUI();
+        };
+
+        // PWA 서비스 워커 등록
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .catch((err) => console.log('Service Worker registration failed: ', err));
+            });
+        }
+
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initApp);
+        else initApp();
+    </script>
+</body>
+</html>
