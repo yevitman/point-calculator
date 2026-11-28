@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#83e3f5"/>
+      <stop offset="1" stop-color="#1754d8"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#fff5a6"/><stop offset=".48" stop-color="#ffbf35"/><stop offset="1" stop-color="#e88a13"/>
+    </linearGradient>
+    <linearGradient id="silver" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#fff"/><stop offset=".48" stop-color="#c9d4e5"/><stop offset="1" stop-color="#75849c"/>
+    </linearGradient>
+    <linearGradient id="edge" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#f9a36d"/><stop offset="1" stop-color="#813d31"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="10" stdDeviation="9" flood-color="#102c62" flood-opacity=".42"/></filter>
+  </defs>
+  <rect x="28" y="28" width="456" height="456" rx="88" fill="url(#tile)" stroke="#d5f4ff" stroke-width="10"/>
+  <g filter="url(#shadow)">
+    <g>
+      <path d="M102 261v39c0 25 43 45 97 45s97-20 97-45v-39" fill="url(#edge)" stroke="#693b3b" stroke-width="5"/>
+      <ellipse cx="199" cy="261" rx="97" ry="45" fill="url(#gold)" stroke="#744522" stroke-width="6"/>
+      <ellipse cx="199" cy="258" rx="79" ry="33" fill="none" stroke="#fff0a0" stroke-width="5"/>
+      <text x="199" y="280" text-anchor="middle" font-family="Arial,sans-serif" font-size="72" font-weight="800" fill="#8b5417">$</text>
+    </g>
+    <g>
+      <path d="M222 273v31c0 25 41 43 92 43s92-18 92-43v-31" fill="url(#edge)" stroke="#693b3b" stroke-width="5"/>
+      <ellipse cx="314" cy="273" rx="92" ry="43" fill="url(#silver)" stroke="#564a4a" stroke-width="6"/>
+      <ellipse cx="314" cy="270" rx="74" ry="31" fill="none" stroke="#fff" stroke-width="5"/>
+      <text x="314" y="287" text-anchor="middle" font-family="Arial,sans-serif" font-size="48" font-weight="800" fill="#695d5d">₩</text>
+    </g>
+    <g transform="translate(256 145) rotate(38)">
+      <path d="M0-51c20 17 28 42 23 69L0 44-23 18c-5-27 3-52 23-69Z" fill="#f5f8ff" stroke="#c5d3e6" stroke-width="5"/>
+      <circle cy="-7" r="11" fill="#f5ae50" stroke="#c47c26" stroke-width="4"/>
+      <path d="M-23 12-42 32l22-3M23 12l19 20-22-3" fill="#ffb34e" stroke="#db7a2d" stroke-width="4" stroke-linejoin="round"/>
+      <path d="M-9 42 0 59l9-17" fill="#f07837"/>
+    </g>
+  </g>
+  <text x="256" y="399" text-anchor="middle" font-family="Arial,sans-serif" font-size="62" font-weight="800" letter-spacing="1" fill="#fff">POINT</text>
+  <text x="256" y="442" text-anchor="middle" font-family="Arial,sans-serif" font-size="29" font-weight="700" fill="#c9f3ff">포인트</text>
+</svg>
